@@ -31,14 +31,14 @@ sudo usermod -a -G dialout henrik
 
 
 Connect to the device
-screen /dev/ttyUSB0 19200
+screen /dev/ttyUSB0 9600
 To leave Ctrl-A D
 To and kill screen: Ctrl-A k y
 
 
 
 Or picocom:
-picocom --b 19200 /dev/ttyUSB0
+picocom --b 9600 /dev/ttyUSB0
 To leave Ctrl-A Ctrl-X
 
 
@@ -53,10 +53,8 @@ If cutecom xmodem did not work perhaps this is why:
 https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=911378
 
 Sending from command line instead:
-stty -F /dev/ttyUSB0 19200 cs8 -parenb -cstopb -ixon
-sx -B 128 havrapp.bin < /dev/ttyUSB0 > /dev/ttyUSB0 
-
-
+stty -F /dev/ttyUSB0 9600 cs8 -parenb -cstopb -ixon
+sx havrapp.bin < /dev/ttyUSB0 > /dev/ttyUSB0 
 
 
 

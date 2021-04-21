@@ -12,7 +12,7 @@ See "avrdude_usb_atmega328p.txt" on how to set fuse bits and write the boot load
 Default configuration assumes 16 Mhz oscillator/resonator and 9600 baud.
 
 When the boot loader starts it will write a short text just to tell that it started: 
-"www.eit.se/habl/1.8"
+"www.eit.se/habl/1.9"
 
 Then it will wait about 3 seconds for user cancel autoboot by pressing Esc exactly 5 times.
 

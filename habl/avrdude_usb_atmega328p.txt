@@ -192,9 +192,17 @@ First the fuse bytes needs to be programmed.
 
 LOW fuse
 
-	Using a 16 MHz resonator so CKDIV8=1, CKOUT=1, SUT=10, CKSEL=1110
-	
+	If HW have crystal oscillator then perhaps this is good:
+	Using a 16 MHz crystal so CKDIV8=1, CKOUT=1, CKSEL=1111, SUT=11
+
+	Using a 16 MHz resonator so CKDIV8=1, CKOUT=1, CKSEL=1110, SUT=10	
 	So 0xEE
+
+	Had some issues with reset, perhaps to slowly rising power, the SUT setting is confusing, 
+        is it different depending on crystal or cheramic?
+        See "DS40002061B-page 39"
+        well then perhaps this is better: SUT=01
+	So 0xDE
 
 HIGH fuse
 
@@ -220,7 +228,7 @@ Extended fuse
 No locking bits so skip those.
 
 
-avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xEE:m  -u   -B 8
+avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xDE:m  -u   -B 8
 avrdude -p m328p -P usb -c avrispmkII -U hfuse:w:0xCA:m  -u   -B 8
 avrdude -p m328p -P usb -c avrispmkII -U efuse:w:0xFD:m  -u   -B 8
 
