@@ -1,0 +1,246 @@
+
+Putting HABL on an atmega328p MCU using USB in system programmer
+
+
+
+
+Install compiler and avrdude (on debian/ubuntu/mint style linux):
+apt-get install gcc-avr avr-libc binutils-avr avrdude cutecom lrzsz
+
+
+
+To compile the boot loader:
+make
+
+
+
+Some HW will be needed.
+
+
+AVRISP MKII pin configuration.
+
+	AVR ISP (In-System Programming) Pinouts
+	1  MISO
+	2  VTG
+	3  SCK
+	4  MOSI
+	5  RESET
+	6  GND
+	
+	Contact (female) seen from below:
+	 +---+---+------- 
+	 | 5 | 6 |-------
+	[| 3 | 4 |-------
+	 | 1 | 2 |-------
+	 +---+---+------- red
+	
+	Pin one is the one marked red on flat cable.
+
+
+
+Adapter cable from 2*3 to 1*6
+
+	Pin connector (male is mirror of the female):
+	 +---+---+ 
+	 | 6 | 5 |
+	 | 4 | 3 
+	 | 2 | 1 |
+	 +---+---+
+		1  MISO
+		2  VTG/VCC
+		3  SCK
+		4  MOSI
+		5  RESET
+		6  GND
+	
+	Connector J2 molex female from below (same but renumbered the pins)
+	++---------+
+	|| 6 MOSI  |
+	 | 5 MISO  |
+	 | 4 SCK   |
+	 | 3 VTG   |
+	 | 2 Reset |
+	|| 1 GND   |
+	++---------+
+
+
+
+
+
+The test board used looked like this:
+
+                  ATMEGA328p 28pin DIL
+                   +------------+
+         reset ----| 1          |
+           RxD ----| 2          |
+           TxD ----| 3          |
+                   |            |
+Resonator          |            |
+16MHz              |            |
++---+      VCC ----| 7       22 |------------- GND
+|  2|----- GND ----| 8          |
+|  1|---- XTAL1 ---| 9       20 |---- VCC ---- VTG
+|  3|---- XTAL2 ---| 10      19 |------------- SCK
++---+              |         18 |------------- MISO
+                   |         17 |------------- MOSÍ
+                   |            |
+                   |            |
+                   +------------+
+
+A decoupling capacitor (100nF) between pin 7 and 8 is not shown above.
+
+
+Connector J1 molex:
++-------+
+| 1 GND |
+| 2 VCC ||
+| 3 RxD ||
+| 4 VCC |
++-------+
+
+
+Connector J2 molex pin/male seen from above
+ +---------+
+ | 1 GND   |
+ | 2 Reset ||
+ | 3 VTG   ||
+ | 4 SCK   ||
+ | 5 MISO  ||
+ | 6 MOSI  |
+ +---------+
+
+
+
+
+
+Power:                        7805
+                             +-----+
+batt+  ----diode>------------|     |-------------- VCC
+                       |     +-----+     |
+                   C1 ===       |       === C2
+                       |        |        |
+batt-  -------------------------+----------------- GND
+
+
+C1,C2 = 100nF
+
+
+
+Used an adapter cable from J2 to AVRISP MKII connector.
+Used this to connect computer to J1: http://www.eit.se/opto_usb_uart
+
+
+
+Programming the device (using avrispmkII)
+
+Set read write properties on usb dev (or do this as root).
+
+
+
+
+The avrispmkII have 2 LEDs. 
+
+	One next to USB connector it is green when computer is connected.
+	
+	The other indicates operation.
+        If device is not powered it is solid red.
+	When device is first connected and powered on it flashes red.
+	When a command has been performed it goes green.
+
+
+
+Check that you have connection with your device (read someting):
+
+	avrdude -p m328p -P usb -c avrispmkII -U flash:r:flash.bin:r
+
+It shall say:
+
+	avrdude: AVR device initialized and ready to accept instructions
+	
+	Reading | ################################################## | 100% 0.00s
+	
+	avrdude: Device signature = 0x1e950f (probably m328p)
+	avrdude: reading flash memory:
+	
+	Reading | ################################################## | 100% 9.56s
+	
+	avrdude: writing output file "flash.bin"
+	
+	avrdude: safemode: Fuses OK (E:FC, H:DA, L:FE)
+	
+	avrdude done.  Thank you.
+	
+	
+
+If it only say:
+
+	avrdude done.  Thank you.
+
+That is not good. Try sudo avrdude...
+
+
+
+
+
+
+First the fuse bytes needs to be programmed.
+
+	https://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48A-PA-88A-PA-168A-PA-328-P-DS-DS40002061B.pdf
+	http://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega328p
+	
+	NOTE! Below 1 is unprogrammed, 0 is programmed/checked
+
+LOW fuse
+
+	Using a 16 MHz resonator so CKDIV8=1, CKOUT=1, SUT=10, CKSEL=1110
+	
+	So 0xEE
+
+HIGH fuse
+
+	BOOTRST shall be 0 (programmed/checked)
+	For boot loader reset.
+	
+	For boot loader size 1024 words:
+	BOOTSZ1 shall be 0 (programmed/checked)
+	BOOTSZ0 shall be 1 (not programmed)
+	If you change here then you may need to adjust START_ADRESS_OF_BOOT_SECTION in Makefile also.
+	If bootloader is 1024 it shall start at 0x3C00 (for atmega328p)
+	
+	WDTON "Watchdog Timer Always On" (programmed/checked)
+	
+	So 0xCA
+
+Extended fuse
+
+	We have regulated 3.3V (or 5V) so brownout detection at 2.7 V 
+	
+	So 0xFD
+	
+No locking bits so skip those.
+
+
+avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xEE:m  -u   -B 8
+avrdude -p m328p -P usb -c avrispmkII -U hfuse:w:0xCA:m  -u   -B 8
+avrdude -p m328p -P usb -c avrispmkII -U efuse:w:0xFD:m  -u   -B 8
+
+
+Old notes
+	When programming efuse I got "verification error... 0x04 != 0xfc". Seems we can ignore this error.
+
+
+
+
+
+Downloading the boot loader program to flash:
+
+	avrdude -p m328p -P usb -c avrispmkII -U flash:w:habl.hex  -B 8
+
+
+
+
+Test device with some hello world program.
+Send the hello world binary using:
+	cutecom
+
+
