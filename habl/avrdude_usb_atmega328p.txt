@@ -185,6 +185,9 @@ That is not good. Try sudo avrdude...
 
 First the fuse bytes needs to be programmed.
 
+	Table 26-7 in "Boot Size Configuration, ATmega328P"
+	in "ATmega328P [DATASHEET]7810D–AVR–01/15"
+
 	https://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48A-PA-88A-PA-168A-PA-328-P-DS-DS40002061B.pdf
 	http://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega328p
 	
@@ -200,9 +203,11 @@ LOW fuse
 
 	Had some issues with reset, perhaps to slowly rising power, the SUT setting is confusing, 
         is it different depending on crystal or cheramic?
-        See "DS40002061B-page 39"
+        See "DS40002061B-page 39" (https://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48A-PA-88A-PA-168A-PA-328-P-DS-DS40002061B.pdf)
         well then perhaps this is better: SUT=01
 	So 0xDE
+
+
 
 HIGH fuse
 
@@ -213,11 +218,14 @@ HIGH fuse
 	BOOTSZ1 shall be 0 (programmed/checked)
 	BOOTSZ0 shall be 1 (not programmed)
 	If you change here then you may need to adjust START_ADRESS_OF_BOOT_SECTION in Makefile also.
-	If bootloader is 1024 it shall start at 0x3C00 (for atmega328p)
+	If bootloader is 1024 it shall start at 0x7800 (for atmega328p)
 	
 	WDTON "Watchdog Timer Always On" (programmed/checked)
 	
 	So 0xCA
+
+	NOTE In Atmega documentation sizes are given in words while in the makefile
+        it shall be in bytes. That is 3C00 words are 7800 bytes.
 
 Extended fuse
 
@@ -233,8 +241,6 @@ avrdude -p m328p -P usb -c avrispmkII -U hfuse:w:0xCA:m  -u   -B 8
 avrdude -p m328p -P usb -c avrispmkII -U efuse:w:0xFD:m  -u   -B 8
 
 
-Old notes
-	When programming efuse I got "verification error... 0x04 != 0xfc". Seems we can ignore this error.
 
 
 

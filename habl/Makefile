@@ -16,14 +16,17 @@ OBJECT_FILES=habl.o avr_uart.o xmodem.o
 MCU=atmega328p
 
 
-# Size of boot loader section.
+# Size of boot loader section. This is in bytes, Atmega documentation will use words.
 #   You may need to adjust this for:
 #   atmega88 with 512 word boot section it shall be 0x01C00.
 #   atmega88 with 1024 word boot section its probably  0x01800 (I have not tested this)
 #   atmega168 with 512 word boot section it shall be 0x03C00 (512 words is 1024 bytes 0x4000-0x400=0x3C00)
 #   atmega168 with 1024 word boot section its probably  0x03800 (I have not tested this)
+#   atmega328 with 512 word boot section its probably  0x07800 (0x8000-0x400=0x7C00)
 #   atmega328 with 1024 word boot section its probably  0x07800 (0x8000-0x800=0x7800)
 # This must match the fuse bits you set, see avrdude_usb_atmega328.txt.
+# Also remember to check the IGNORE_CSUM macro in avr_cfg.h.
+# if a 512 word boot section is used that macro needs to be defined to reduce code size.
 START_ADRESS_OF_BOOT_SECTION=0x7800
 
 

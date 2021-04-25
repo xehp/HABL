@@ -32,6 +32,18 @@ stty -F /dev/ttyUSB0 9600 cs8 -parenb -cstopb -ixon
 sx havrapp.bin < /dev/ttyUSB0 > /dev/ttyUSB0
 
 
+A good transfer can look like this:
+
+henrik@sapsan:~/tmp/ir_tag/atmega/tag_sw$ sx havrapp.bin < /dev/ttyUSB0 > /dev/ttyUSB0 
+Sending havrapp.bin, 20 blocks: Give your local XMODEM receive command now.
+Bytes Sent:   2688   BPS:731                             
+
+Transfer complete
+
+
+
+
+
 
 This bootloader enables the watchdog (by default) so the applications loaded needs to support that. This can be changed in avr_cfg.h.
 

@@ -49,6 +49,7 @@ History
 #define UART_BAUDRATE 9600L
 
 // Define this if boot loader shall enable watchdog timer
+// See also fuse bits (it might be enabled by those also).
 #define ENABLE_WDT
 
 // A major problem with XMODEM is to know if its 16bit CRC or 1 byte simple checksum.
@@ -56,6 +57,8 @@ History
 #define USE_XMODEM_CRC16
 
 // The program might not fit in 512 word boot loader unless checksum is ignored.
+// So if START_ADRESS_OF_BOOT_SECTION=0x7C00 this is macro needs to be defined
+// so that HABL will fit in the smaller boot section.
 //#define IGNORE_CSUM
 
 
