@@ -7,6 +7,8 @@ Putting HABL on an atmega328p MCU using USB in system programmer
 Install compiler and avrdude (on debian/ubuntu/mint style linux):
 apt-get install gcc-avr avr-libc binutils-avr avrdude cutecom lrzsz
 
+hex2bin is also needed
+https://sourceforge.net/projects/hex2bin/
 
 
 To compile the boot loader:
@@ -70,22 +72,22 @@ Adapter cable from 2*3 to 1*6
 The test board used looked like this:
 
                   ATMEGA328p 28pin DIL
-                   +------------+
-         reset ----| 1          |
-           RxD ----| 2          |
-           TxD ----| 3          |
-                   |            |
-Resonator          |            |
-16MHz              |            |
-+---+      VCC ----| 7       22 |------------- GND
-|  2|----- GND ----| 8          |
-|  1|---- XTAL1 ---| 9       20 |---- VCC ---- VTG
-|  3|---- XTAL2 ---| 10      19 |------------- SCK
-+---+              |         18 |------------- MISO
-                   |         17 |------------- MOSÍ
-                   |            |
-                   |            |
-                   +------------+
+                   +----------------+
+        reset_ ----| 1              |
+           RxD ----| 2 PD0          |
+           TxD ----| 3 PD1          |
+                   |                |
+Resonator          |                |
+16MHz              |                |
++---+      VCC ----| 7           22 |------------- GND
+|  2|----- GND ----| 8              |
+|  1|---- XTAL1 ---| 9           20 |---- VCC ---- VTG
+|  3|---- XTAL2 ---| 10      PB5 19 |------------- SCK
++---+              |         PB4 18 |------------- MISO
+                   |         PB3 17 |------------- MOSÍ
+                   |                |
+                   |                |
+                   +----------------+
 
 A decoupling capacitor (100nF) between pin 7 and 8 is not shown above.
 
@@ -185,18 +187,25 @@ That is not good. Try sudo avrdude...
 
 First the fuse bytes needs to be programmed.
 
+	These needs to be set to fit the actual HW, so its quite tricky.
+
+
 	Table 26-7 in "Boot Size Configuration, ATmega328P"
 	in "ATmega328P [DATASHEET]7810D–AVR–01/15"
 
 	https://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48A-PA-88A-PA-168A-PA-328-P-DS-DS40002061B.pdf
 	http://eleccelerator.com/fusecalc/fusecalc.php?chip=atmega328p
-	
+	https://www.engbedded.com/fusecalc/	
+
 	NOTE! Below 1 is unprogrammed, 0 is programmed/checked
+
+Example:
 
 LOW fuse
 
 	If HW have crystal oscillator then perhaps this is good:
 	Using a 16 MHz crystal so CKDIV8=1, CKOUT=1, CKSEL=1111, SUT=11
+	So 0xCE
 
 	Using a 16 MHz resonator so CKDIV8=1, CKOUT=1, CKSEL=1110, SUT=10	
 	So 0xEE
@@ -230,12 +239,20 @@ HIGH fuse
 Extended fuse
 
 	We have regulated 3.3V (or 5V) so brownout detection at 2.7 V 
+	Or was this for regulated 2.7V power so brownout detection at 1.8 V?
 	
-	So 0xFD
+	So 0xFD?
 	
 No locking bits so skip those.
 
+NOTE The below is just an example, it needs to be adjusted for respective HW.
 
+For a board on internal 8 MHz internal RC, running on 2.7 Volt power, 1024 word boot section:
+avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xE2:m  -u   -B 8
+avrdude -p m328p -P usb -c avrispmkII -U hfuse:w:0xCB:m  -u   -B 8
+avrdude -p m328p -P usb -c avrispmkII -U efuse:w:0xFE:m  -u   -B 8
+
+Or another example:
 avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xDE:m  -u   -B 8
 avrdude -p m328p -P usb -c avrispmkII -U hfuse:w:0xCA:m  -u   -B 8
 avrdude -p m328p -P usb -c avrispmkII -U efuse:w:0xFD:m  -u   -B 8
@@ -244,11 +261,14 @@ avrdude -p m328p -P usb -c avrispmkII -U efuse:w:0xFD:m  -u   -B 8
 
 
 
+If you got the above wrong check this first:
+https://www.avrfreaks.net/forum/tutsoft-recovering-locked-out-avr?name=PNphpBB2&file=viewtopic&t=106325
+
 
 
 Downloading the boot loader program to flash:
 
-	avrdude -p m328p -P usb -c avrispmkII -U flash:w:habl.hex  -B 8
+avrdude -p m328p -P usb -c avrispmkII -U flash:w:habl.hex  -B 8
 
 
 

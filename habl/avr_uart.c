@@ -89,18 +89,31 @@ History
 
 void uart_init(void)
 {
-  //ubrr_value = 103;
-  unsigned int ubrr_value = (AVR_FOSC/(16L*UART_BAUDRATE))-1; // AVR_FOSC is larger than a 16 bit int so be careful here;
-  // Recommended baud rates are 300, 9600 or 19200,
-  // With 16 MHz and 115200 baud we get 125000 instead, so be aware.
+
+	// AVR_FOSC is larger than a 16 bit int so be careful here;
+	// Recommended baud rates are 300, 9600 or 19200,
+	// With 16 MHz and 115200 baud we get 125000 instead, so be aware.
+#if UART_BAUDRATE >=9600
+	// Setting this bit UCSR0A bit 1 (U2Xn) the baudrate is doubled,
+	// This can be used to get 115200 baud with 20 MHz and only 1% off.
+	// Baudrate will be: AVR_FOSC/(8*(ubrr_value+1))
+	UCSR0A |= _BV(U2X0);
+	uint16_t ubrr_value = ((AVR_FOSC+(4L*UART_BAUDRATE))/(8L*UART_BAUDRATE))-1;
+	//uint16_t ubrr_value = 7;
+#else
+	// Clearing U2Xn is default so ignoring this step is possible
+	// (but if your boot loader set it things will get confused)
+	// This is the boot loader so skip it.
+	//UCSR0A &= ~_BV(U2X0);
+	uint16_t ubrr_value = (AVR_FOSC/(16L*UART_BAUDRATE))-1;
+#endif
+
+
 
   /* Set baud rate */
   UBRR0H = (unsigned char)(ubrr_value>>8);
   UBRR0L = (unsigned char)ubrr_value;
 
-  // Setting this bit UCSR0A bit 1 (U2Xn) the baudrate is doubled,
-  // remember to adjust calculation of ubrr_value.
-  //UCSR0A |= _BV(1);
 
   /* Enable receiver and transmitter */
   UCSR0B = (1<<RXEN0)|(1<<TXEN0);

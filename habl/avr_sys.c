@@ -45,9 +45,6 @@ History
 #include "avr_uart.h"
 
 
-#if (!(defined(__AVR_ATmega8__) || defined(__AVR_ATmega88__)))
-#error /* well it should work with other atmega mcus to but that is not tested. */
-#endif
 
 
 
