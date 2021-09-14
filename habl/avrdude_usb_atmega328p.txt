@@ -203,20 +203,16 @@ Example:
 
 LOW fuse
 
-	If HW have crystal oscillator then perhaps this is good:
-	Using a 16 MHz crystal so CKDIV8=1, CKOUT=1, CKSEL=1111, SUT=11
-	So 0xCE
-
-	Using a 16 MHz resonator so CKDIV8=1, CKOUT=1, CKSEL=1110, SUT=10	
-	So 0xEE
-
 	Had some issues with reset, perhaps to slowly rising power, the SUT setting is confusing, 
         is it different depending on crystal or cheramic?
         See "DS40002061B-page 39" (https://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48A-PA-88A-PA-168A-PA-328-P-DS-DS40002061B.pdf)
-        well then perhaps this is better: SUT=01
-	So 0xDE
 
+	In my case I have a 8 - 16 MHz resonator so CKSEL3...1 shall be 111 according to table 9-3.
+	In table 9-4 Selected "Ceramic resonator, BOD enabled" so CKSEL0 = 0, SUT1...0 = 10
+	So that is: CKDIV8=1, CKOUT=1, CKSEL=1110, SUT=10
 
+	Which gives:
+	0xEE
 
 HIGH fuse
 
@@ -238,27 +234,28 @@ HIGH fuse
 
 Extended fuse
 
-	We have regulated 3.3V (or 5V) so brownout detection at 2.7 V 
-	Or was this for regulated 2.7V power so brownout detection at 1.8 V?
+	We have regulated 3.3V (or 5V) so brownout detection at 2.7 Volt is desired.
 	
-	So 0xFD?
+	So 0xFD
+
 	
 No locking bits so skip those.
 
+
 NOTE The below is just an example, it needs to be adjusted for respective HW.
 
-For a board on internal 8 MHz internal RC, running on 2.7 Volt power, 1024 word boot section:
-avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xE2:m  -u   -B 8
-avrdude -p m328p -P usb -c avrispmkII -U hfuse:w:0xCB:m  -u   -B 8
-avrdude -p m328p -P usb -c avrispmkII -U efuse:w:0xFE:m  -u   -B 8
+Try this first, a board on internal 8 MHz internal RC, 1024 word boot section:
+avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xe2:m -U hfuse:w:0xca:m -U efuse:w:0xff:m  
 
-Or another example:
-avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xDE:m  -u   -B 8
-avrdude -p m328p -P usb -c avrispmkII -U hfuse:w:0xCA:m  -u   -B 8
-avrdude -p m328p -P usb -c avrispmkII -U efuse:w:0xFD:m  -u   -B 8
+NOTE The above is the safer setting to try first, but baudrate may need to be adjusted accordingly.
+That is if SW expect 16 MHz but is run on 8 MHz then baudrate is only half.
 
 
 
+Or another example using Osc/resonator (for example a 16 MHz one) and brownout detector at 2.7 Volt:
+avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xee:m -U hfuse:w:0xca:m -U efuse:w:0xfd:m 
+
+NOTE that the above may brick your device if it runs on 2.7 Volt or less or the external chrystal or resonator is faulty.
 
 
 If you got the above wrong check this first:
@@ -278,3 +275,7 @@ Send the hello world binary using:
 	cutecom
 
 
+
+
+If there are many devices to do, do all commands in one line (remember to adjust the fuse bits to your HW):
+sudo avrdude -p m328p -P usb -c avrispmkII -U lfuse:w:0xDE:m -u -B 8; sleep 1; sudo avrdude -p m328p -P usb -c avrispmkII -U hfuse:w:0xCC:m -u -B 8; sleep 1; sudo avrdude -p m328p -P usb -c avrispmkII -U efuse:w:0xFD:m  -u   -B 8; sleep 1; sudo avrdude -p m328p -P usb -c avrispmkII -U flash:w:habl.hex -B 8
